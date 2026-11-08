@@ -1,0 +1,36 @@
+{
+    "name": "splitsmart-ledger",
+    "version": "1.1.0",
+    "description": "A local shared-expense ledger and bill-splitting MCP server built for Claude Code",
+    "type": "module",
+    "bin": {
+        "splitsmart": "dist/cli.js"
+    },
+    "files": [
+        "dist"
+    ],
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "typecheck": "tsc --noEmit",
+        "build": "npm run typecheck && node scripts/build.mjs",
+        "start": "node dist/mcp-server.js",
+        "dev": "tsx src/mcp-server.ts",
+        "cli": "node dist/cli.js",
+        "test": "tsx --test test/args.test.ts"
+    },
+    "keywords": ["expenses", "ledger", "split", "mcp", "claude", "budget", "jsonl"],
+    "author": "Muhammad Hammad",
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.0.1",
+        "zod": "^3.23.8"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "esbuild": "^0.24.0",
+        "tsx": "^4.19.0",
+        "typescript": "^5.3.3"
+    }
+}

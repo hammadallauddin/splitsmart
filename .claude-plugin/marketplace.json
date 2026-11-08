@@ -1,0 +1,16 @@
+{
+    "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+    "name": "splitsmart",
+    "description": "Shared expense tracking and bill splitting for Claude Code.",
+    "owner": {
+        "name": "Muhammad Hammad"
+    },
+    "plugins": [
+        {
+            "name": "splitsmart-ledger",
+            "description": "Records shared expenses in SQLite and audits who owes what.",
+            "source": "./",
+            "category": "productivity"
+        }
+    ]
+}
