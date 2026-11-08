@@ -2,8 +2,6 @@
 
 A local-first Claude Code plugin for splitting group expenses. Log a bill in plain language, see everyone's share, and keep an auditable ledger — without signing up for an expense app.
 
-For a complete technical walkthrough of the architecture and a repeatable recipe for building your own Claude Code plugin, see [guide.md](guide.md).
-
 ## The problem
 
 Splitting a bill across friends usually means one person pays, everyone promises to settle later, and the math lives in a chat thread. Receipts get lost, shares get recalculated differently each time, and nobody knows the running total. Cloud expense apps solve the arithmetic but demand accounts, sync, and access to your data.
