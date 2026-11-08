@@ -30,9 +30,13 @@ This guide explains the contract Claude Code expects, why each file exists, and 
 
 ## 1. The plugin model
 
+A plugin is a versioned directory of capabilities that Claude Code discovers and merges into a session. It does not modify Claude Code itself; it contributes components through files in known locations.
+
 A Claude Code plugin is a **directory contract**. There is no plugin runtime to start and no registration API to call. Claude Code scans known paths, reads manifests and frontmatter, and merges the components into the session.
 
 ### 1.1 Components
+
+Components are the individual capability types a plugin can contribute: MCP tools, prompt assets (skills, commands, agents), and lifecycle automation (hooks).
 
 | Component | Location | Discovery | Invocation |
 | --- | --- | --- | --- |
@@ -48,12 +52,16 @@ MCP servers are the only component that runs as a separate process. Skills, comm
 
 ### 1.2 Trust and execution model
 
+The trust model describes what executes, when it executes, and with whose permissions.
+
 - Plugin code runs with your user privileges. A hook or MCP server can read files, execute commands, and make network requests.
 - A marketplace is a distribution index, not a sandbox. Installing a plugin from an untrusted marketplace is equivalent to running its code.
 - MCP servers persist for the session. Hooks must be fast because they run inline with tool calls.
 - Treat plugin installation like adding a dependency: review the source, pin versions, and prefer least privilege.
 
 ### 1.3 Identity and naming
+
+Identity is the set of names Claude Code uses to distinguish a plugin, its marketplace, its MCP servers, and each exposed tool.
 
 Three names matter:
 
@@ -82,6 +90,8 @@ This is the name you must use in a subagent's `tools:` field or an exact hook ma
 ---
 
 ## 2. Repository layout
+
+The repository layout is the physical directory structure Claude Code scans; paths are part of the contract, not arbitrary organization.
 
 The reference repository uses the following layout:
 
@@ -130,7 +140,11 @@ splitsmart/
 
 ## 3. Scaffolding and toolchain
 
+Scaffolding is the one-time project setup that makes the plugin buildable, type-checkable, and testable.
+
 ### 3.1 Prerequisites
+
+Prerequisites are the external tools and versions the plugin assumes are installed.
 
 ```bash
 node -v      # 18 or later
@@ -142,6 +156,8 @@ claude --version
 The reference uses TypeScript, Node's built-in test runner, and esbuild. The runtime target is Node 18, matching `engines.node`.
 
 ### 3.2 `package.json`
+
+`package.json` is npm's project manifest: it declares the package identity, module type, scripts, runtime dependencies, and the CLI binary.
 
 ```json
 {
@@ -179,6 +195,8 @@ The reference uses TypeScript, Node's built-in test runner, and esbuild. The run
 
 ### 3.3 `tsconfig.json`
 
+`tsconfig.json` configures the TypeScript compiler for type-checking and module resolution.
+
 ```json
 {
     "compilerOptions": {
@@ -199,6 +217,8 @@ The build does **not** use `tsc` to emit. `tsc --noEmit` only type-checks; esbui
 
 ### 3.4 `.gitignore`
 
+The `.gitignore` file tells Git which generated, local, or machine-specific files to exclude from version control.
+
 ```gitignore
 node_modules/
 .DS_Store
@@ -210,9 +230,13 @@ Do not ignore `dist/` if you want the zero-install distribution model.
 
 ## 4. Plugin manifest
 
+The plugin manifest is the single required file that identifies a plugin and supplies the metadata Claude Code uses during installation and display.
+
 `.claude-plugin/plugin.json` is the plugin's identity document.
 
 ### 4.1 Fields
+
+Fields are the manifest keys that define identity, version, authorship, and discoverability.
 
 | Field | Required | Purpose |
 | --- | --- | --- |
@@ -226,6 +250,8 @@ Do not ignore `dist/` if you want the zero-install distribution model.
 | `keywords` | Optional | Discovery metadata. |
 
 ### 4.2 Reference manifest
+
+The reference manifest is the exact file this repository ships; use it as a copy-ready baseline.
 
 ```json
 {
@@ -242,6 +268,8 @@ Do not ignore `dist/` if you want the zero-install distribution model.
 
 ### 4.3 Validate
 
+Validation is a static check that the manifest is syntactically valid and conforms to the schema Claude Code expects.
+
 ```bash
 claude plugin validate .claude-plugin/plugin.json --strict --json
 ```
@@ -252,9 +280,13 @@ A passing report has empty `errors`, `warnings`, and `notes` arrays. Keep `plugi
 
 ## 5. Marketplace manifest
 
+A marketplace manifest is an index that tells Claude Code where one or more plugins live and how to install them.
+
 A marketplace is an index of one or more plugins. A repository can be both a marketplace and a plugin, which is how the reference repository is structured.
 
 ### 5.1 Fields
+
+Fields are the marketplace-level and per-plugin keys that define the index.
 
 | Field | Required | Purpose |
 | --- | --- | --- |
@@ -270,6 +302,8 @@ A marketplace is an index of one or more plugins. A repository can be both a mar
 | `plugins[].version` | Optional | Marketplace override; normally omit and let the manifest define it. |
 
 ### 5.2 Reference manifest
+
+The reference manifest is the exact single-plugin marketplace shipped by this repository.
 
 ```json
 {
@@ -303,6 +337,8 @@ Each plugin directory needs its own `.claude-plugin/plugin.json`.
 
 ### 5.3 Install flow
 
+The install flow is the sequence of commands Claude Code uses to fetch the marketplace, select a plugin, and load it.
+
 ```bash
 claude plugin marketplace add hammadallauddin/splitsmart
 claude plugin install splitsmart@splitsmart
@@ -318,6 +354,8 @@ The marketplace is fetched once and cached. Restart Claude Code after installati
 
 ### 5.4 Validation caveat
 
+Validation is schema checking; the caveat is that a repository can contain both manifests, so the validator's target matters.
+
 When a repository contains both manifests, `claude plugin validate .` validates the **marketplace** manifest. Validate the plugin manifest explicitly:
 
 ```bash
@@ -331,9 +369,13 @@ Do not pass an individual skill, command, or agent path to `claude plugin valida
 
 ## 6. MCP servers
 
+An MCP server is a long-running process that exposes tools (and optionally resources or prompts) to Claude over the Model Context Protocol.
+
 MCP (Model Context Protocol) is how Claude calls external tools. The reference uses a **stdio server**: Claude starts the process, speaks newline-delimited JSON-RPC over stdin/stdout, and keeps it alive for the session.
 
 ### 6.1 Registration: `.mcp.json`
+
+Registration is the mapping that tells Claude Code how to start the server, which command to run, and which environment it needs.
 
 ```json
 {
@@ -359,6 +401,8 @@ MCP (Model Context Protocol) is how Claude calls external tools. The reference u
 `${CLAUDE_PLUGIN_ROOT}` is resolved only in the plugin context. If you open the plugin repository as a normal project, Claude also reads the root `.mcp.json` and reports missing plugin variables; that is expected and does not affect installed usage.
 
 ### 6.2 Minimal server
+
+The minimal server is the smallest useful implementation: a transport, a tool list handler, and a tool call handler.
 
 The reference uses the low-level SDK API because it is explicit and stable:
 
@@ -428,6 +472,8 @@ Key rules:
 
 ### 6.3 Tool schema and naming
 
+A tool schema is the JSON Schema that describes a tool's arguments; naming is how Claude Code qualifies that tool to avoid collisions.
+
 The tool's `name` is local to the server. Claude exposes it with the plugin prefix:
 
 ```text
@@ -442,6 +488,8 @@ mcp__plugin_<plugin>_<server>__<tool>
 A non-plugin project MCP server uses `mcp__<server>__<tool>`. Server names are normalized by replacing characters outside `[a-zA-Z0-9_-]` with `_`.
 
 ### 6.4 Data storage
+
+Data storage is where the server persists state across calls and sessions.
 
 Do not write to the user's project unless the plugin is explicitly project-scoped. Resolve a data directory with a precedence chain and create it lazily:
 
@@ -464,6 +512,8 @@ Recommended precedence:
 
 ### 6.5 Testing the server
 
+Testing the server means proving that the process starts, completes the MCP handshake, and advertises healthy tools.
+
 ```bash
 node dist/mcp-server.js
 ```
@@ -478,6 +528,8 @@ claude mcp get plugin:splitsmart:splitsmart
 The display name is `plugin:<plugin>:<server>`. A healthy plugin server reports `✔ Connected`. `claude mcp get` also shows the resolved `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PLUGIN_DATA` values.
 
 ### 6.6 Native dependencies
+
+Native dependencies are compiled modules (`.node` binaries) that cannot be inlined into a JavaScript bundle.
 
 esbuild can bundle pure JavaScript but not native `.node` binaries. If you depend on `sqlite3`, `better-sqlite3`, or `sharp`:
 
@@ -494,15 +546,21 @@ The bundle then resolves the module from `node_modules` at runtime, which means 
 
 ## 7. Skills
 
+A skill is a reusable instruction set that teaches Claude a procedure and is selected by matching the request against its description.
+
 A skill is a prompt asset that teaches Claude a procedure. Claude selects skills by matching the request against the skill's description.
 
 ### 7.1 File layout
+
+The skill file layout is the directory-and-file convention Claude Code scans for skills.
 
 ```text
 skills/<skill-name>/SKILL.md
 ```
 
 ### 7.2 Frontmatter
+
+Frontmatter is the YAML block between `---` markers that supplies machine-readable metadata.
 
 ```yaml
 ---
@@ -519,6 +577,8 @@ description: Categorizes and structures receipt text into standardized bill entr
 Keep optional fields to the minimum supported by your Claude Code version. The required pair is portable.
 
 ### 7.3 Body
+
+The body is the Markdown procedure Claude receives when the skill is invoked.
 
 The body is loaded when the skill is invoked. Write a procedure, not an essay:
 
@@ -546,6 +606,8 @@ Good skills have:
 
 ### 7.4 Token economics
 
+Token economics is the cost model: metadata is always resident, while the body is loaded only on invocation.
+
 Skill metadata is always in context, especially the description; the body is paid only when the skill fires. `claude plugin details` reports an estimate:
 
 ```text
@@ -560,6 +622,8 @@ Keep descriptions specific and short. A vague description causes false triggers 
 
 ### 7.5 Testing
 
+Testing a skill means confirming that it triggers on the right requests and produces the required output contract.
+
 ```bash
 claude plugin details splitsmart@splitsmart
 ```
@@ -570,9 +634,13 @@ Then invoke the skill naturally in a session and confirm the expected procedure 
 
 ## 8. Slash commands
 
+A slash command is a user-invoked prompt entry point identified by a name the user types after `/`.
+
 Commands are user-invoked entry points. In current Claude Code builds the inventory may group commands with skills, but the invocation contract is unchanged: the user types `/name`.
 
 ### 8.1 File layout
+
+The command file layout is the directory-and-file convention; the filename becomes the command name.
 
 ```text
 commands/<command-name>.md
@@ -581,6 +649,8 @@ commands/<command-name>.md
 The filename is the command name.
 
 ### 8.2 Frontmatter
+
+Command frontmatter is the YAML metadata that controls the command's description and argument hint.
 
 ```yaml
 ---
@@ -597,6 +667,8 @@ argument-hint: <amount> paid by <name> for <details>
 Do not duplicate `name` unless your Claude Code version documents it; the filename is authoritative.
 
 ### 8.3 Body and arguments
+
+The body is the instruction template; argument placeholders are replaced with the user's input before Claude receives it.
 
 ```markdown
 Split the bill described here: $ARGUMENTS
@@ -616,6 +688,8 @@ Split the bill described here: $ARGUMENTS
 
 ### 8.4 Best practices
 
+Best practices are the conventions that keep commands predictable, testable, and cheap in context.
+
 - One command, one job.
 - Name every tool the model should call.
 - State the output contract and the order of operations.
@@ -626,15 +700,21 @@ Split the bill described here: $ARGUMENTS
 
 ## 9. Subagents
 
+A subagent is a separate Claude context with its own prompt and tool allowlist, used to isolate or parallelize work.
+
 A subagent runs in an isolated context window. Use one when a task would flood the main conversation with intermediate work or when you want a narrower tool set.
 
 ### 9.1 File layout
+
+The agent file layout is the directory-and-file convention Claude Code scans for subagents.
 
 ```text
 agents/<agent-name>.md
 ```
 
 ### 9.2 Frontmatter
+
+Agent frontmatter declares the agent's name, delegation trigger, allowed tools, and model.
 
 ```yaml
 ---
@@ -656,6 +736,8 @@ For plugin MCP tools, use the fully qualified name from [section 6.3](#63-tool-s
 
 ### 9.3 Prompt
 
+The prompt is the self-contained instruction the subagent receives; it must not assume access to the main conversation.
+
 The agent does not see the main conversation. Make the prompt self-contained:
 
 ```markdown
@@ -665,6 +747,8 @@ Fetch the ledger with `get_ledger`, then summarize spending by payer in a settle
 State the tool to call, the computation, and the required output. Keep the final response concise; the main agent pays for it.
 
 ### 9.4 Testing
+
+Testing an agent means confirming that it is discoverable, receives the intended tools, and returns a usable result.
 
 ```bash
 claude plugin details splitsmart@splitsmart
@@ -676,9 +760,13 @@ The inventory should list the agent and the MCP server. Then ask a question that
 
 ## 10. Hooks
 
+A hook is a short-lived command that Claude Code runs at a lifecycle event, such as before or after a tool call.
+
 Hooks run commands at lifecycle events. They are powerful and easy to misuse. A hook receives JSON on stdin and communicates through its exit code, stderr, and optionally structured stdout.
 
 ### 10.1 File layout
+
+The hook layout is the conventional `hooks.json` plus script directory Claude Code loads automatically.
 
 ```text
 hooks/
@@ -688,6 +776,8 @@ hooks/
 ```
 
 ### 10.2 Configuration
+
+Configuration is the JSON structure that binds an event and matcher to one or more hook commands.
 
 ```json
 {
@@ -725,6 +815,8 @@ A broad matcher such as `mcp__.*__add_expense` works across servers and is usefu
 
 ### 10.3 Input payload
 
+The input payload is the JSON object Claude Code writes to the hook's stdin.
+
 For `PreToolUse`, stdin looks like:
 
 ```json
@@ -747,6 +839,8 @@ For `PreToolUse`, stdin looks like:
 
 ### 10.4 Exit codes
 
+Exit codes are the hook's primary control channel: they decide whether execution continues, is blocked, or reports a non-blocking error.
+
 | Exit code | Effect |
 | --- | --- |
 | `0` | Success; continue. |
@@ -756,6 +850,8 @@ For `PreToolUse`, stdin looks like:
 Exit code 2 is the simplest portable way to deny a tool call. Structured JSON on stdout supports richer decisions such as `permissionDecision: "allow" | "deny" | "ask"`; use the event-specific schema from the hooks reference and test it against your Claude Code version.
 
 ### 10.5 Reference guard
+
+The reference guard is a concrete `PreToolUse` hook that rejects invalid expense amounts.
 
 ```js
 // PreToolUse hook: blocks add_expense calls with a zero or negative amount.
@@ -789,6 +885,8 @@ Design notes:
 
 ### 10.6 Testing a hook
 
+Testing a hook means feeding it representative payloads and asserting the exit code and stderr behavior.
+
 ```powershell
 '{"tool_input":{"amount":-5}}' | node hooks/scripts/guard.mjs
 "exit=$LASTEXITCODE"   # 2
@@ -810,11 +908,17 @@ After changing hooks, restart Claude Code. Plugin hooks merge with user and proj
 
 ## 11. Build and distribution
 
+Build and distribution is the process that turns TypeScript sources into runnable artifacts and makes those artifacts available to Claude Code.
+
 ### 11.1 Why bundle
+
+Bundling is the act of inlining pure-JavaScript dependencies into a single runnable file.
 
 Claude Code runs `node dist/mcp-server.js` directly from the plugin directory. It does not run `npm install` for installed plugins. Bundling with esbuild produces a self-contained file that works from a fresh checkout.
 
 ### 11.2 Build script
+
+The build script is the executable definition of the bundling step.
 
 `scripts/build.mjs`:
 
@@ -842,6 +946,8 @@ await build({
 
 ### 11.3 Distribution contract
 
+The distribution contract is the set of files and guarantees users can rely on when installing from the repository.
+
 - Commit `dist/` whenever `src/` changes.
 - Keep `dist/` out of `.gitignore`.
 - Commit `package-lock.json` for reproducible builds.
@@ -849,6 +955,8 @@ await build({
 - Do not commit `node_modules/`.
 
 ### 11.4 Tests
+
+Tests are executable checks that protect the plugin's pure logic against regressions.
 
 The reference tests the CLI parser with Node's built-in runner:
 
@@ -873,6 +981,8 @@ Test the pure logic (parsers, validation, storage helpers) rather than the MCP t
 
 ### 11.5 Versioning
 
+Versioning is the discipline of keeping identity strings consistent across manifests and the runtime.
+
 Keep these in sync:
 
 1. `.claude-plugin/plugin.json` → `version`
@@ -891,7 +1001,11 @@ The command validates that `plugin.json` and any enclosing marketplace entry agr
 
 ## 12. Validation and end-to-end testing
 
+Validation and end-to-end testing is the process of proving the plugin works in a real Claude Code installation, not just in isolation.
+
 ### 12.1 Static validation
+
+Static validation checks manifests against schemas without installing or running anything.
 
 ```bash
 claude plugin validate . --strict --json
@@ -901,6 +1015,8 @@ claude plugin validate .claude-plugin/plugin.json --strict --json
 Both should return `"success": true` with empty error and warning arrays.
 
 ### 12.2 Isolated installation
+
+Isolated installation is a test in a throwaway Claude configuration directory so the developer's real setup is untouched.
 
 Never test in your real Claude configuration. Use a temporary config directory.
 
@@ -932,6 +1048,8 @@ claude mcp list
 
 ### 12.3 What success looks like
 
+Success criteria are the observable outputs that indicate the plugin, its components, and its MCP server loaded correctly.
+
 ```text
 Installed plugins:
 
@@ -956,6 +1074,8 @@ If the server is missing or disconnected, run it directly, then check `dist/`, s
 
 ### 12.4 Troubleshooting matrix
 
+The troubleshooting matrix maps common symptoms to likely causes and concrete fixes.
+
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Plugin not listed | Wrong marketplace or plugin name | Check `marketplace.json` and use `<plugin>@<marketplace>` |
@@ -973,6 +1093,8 @@ If the server is missing or disconnected, run it directly, then check `dist/`, s
 
 ### 12.5 Removing the test environment
 
+Cleanup is the step that deletes the throwaway configuration directory after testing.
+
 ```powershell
 Remove-Item -Recurse -Force $env:CLAUDE_CONFIG_DIR
 ```
@@ -983,7 +1105,11 @@ This does not touch your normal Claude configuration.
 
 ## 13. Publishing and updating
 
+Publishing is making the repository available through a marketplace; updating is shipping a new version to existing installations.
+
 ### 13.1 Publish
+
+Publishing is the initial release: commit, push, register the marketplace, and install.
 
 ```bash
 git init -b main
@@ -1004,6 +1130,8 @@ Restart Claude Code.
 
 ### 13.2 Update
 
+The update flow is the repeatable release procedure for an already-published plugin.
+
 1. Change `src/` and any prompt assets.
 2. Run `npm run build`.
 3. Run `npm test`.
@@ -1023,6 +1151,8 @@ claude plugin update splitsmart@splitsmart
 
 ### 13.3 Uninstall
 
+Uninstallation removes the plugin from a Claude configuration while optionally preserving its data.
+
 ```bash
 claude plugin uninstall splitsmart
 ```
@@ -1033,7 +1163,11 @@ Use `--keep-data` to preserve the plugin data directory (`~/.claude/plugins/data
 
 ## 14. Reference
 
+The reference section is a lookup appendix for fields, names, variables, and checklists used throughout the guide.
+
 ### 14.1 Frontmatter at a glance
+
+Frontmatter is the YAML metadata block at the top of a Markdown component file.
 
 | Asset | Path | Required frontmatter |
 | --- | --- | --- |
@@ -1045,6 +1179,8 @@ Use `--keep-data` to preserve the plugin data directory (`~/.claude/plugins/data
 
 ### 14.2 Environment variables
 
+Environment variables are the runtime inputs Claude Code and the plugin use to locate files and persist data.
+
 | Variable | Scope | Purpose |
 | --- | --- | --- |
 | `CLAUDE_PLUGIN_ROOT` | Plugin MCP and hooks | Absolute plugin directory |
@@ -1053,6 +1189,8 @@ Use `--keep-data` to preserve the plugin data directory (`~/.claude/plugins/data
 | `SPLITSMART_DATA_DIR` | Reference plugin | Application-specific data override |
 
 ### 14.3 Tool naming
+
+Tool naming is the deterministic scheme that turns plugin, server, and tool names into a globally unique identifier.
 
 ```text
 Plugin tool:   mcp__plugin_<plugin>_<server>__<tool>
@@ -1064,6 +1202,8 @@ Normalization: characters outside `[a-zA-Z0-9_-]` become `_`.
 
 ### 14.4 Security checklist
 
+The security checklist is a review list for the code-execution and data-access risks of plugin components.
+
 - [ ] Install plugins only from sources you trust and review.
 - [ ] Keep agent `tools` allowlists as narrow as possible.
 - [ ] Validate every MCP tool argument server-side.
@@ -1074,6 +1214,8 @@ Normalization: characters outside `[a-zA-Z0-9_-]` become `_`.
 - [ ] Pin dependency versions and commit the lockfile.
 
 ### 14.5 Release checklist
+
+The release checklist is the minimum set of checks to run before publishing or updating.
 
 - [ ] `plugin.json` and `package.json` versions match.
 - [ ] MCP server version matches.
@@ -1089,6 +1231,8 @@ Normalization: characters outside `[a-zA-Z0-9_-]` become `_`.
 - [ ] Working tree is clean.
 
 ### 14.6 Further reading
+
+Further reading points to the authoritative documentation for details that change between releases.
 
 - Claude Code plugins: <https://code.claude.com/docs/en/plugins>
 - MCP: <https://code.claude.com/docs/en/mcp>
@@ -1109,7 +1253,11 @@ claude mcp --help
 
 ## 15. Appendix: the reference plugin end to end
 
+The appendix traces the reference plugin from a user request through every component and back to the user.
+
 ### 15.1 Request flow
+
+The request flow is the ordered path a slash command takes through prompts, tools, hooks, and storage.
 
 ```text
 /split-bill 96.40 paid by Sara for groceries for Sara, Ali and Hina
@@ -1134,6 +1282,8 @@ Later, a question such as "Who has paid the most?" can be delegated to `agents/l
 
 ### 15.2 File responsibilities
 
+File responsibilities map each file in the repository to the single concern it owns.
+
 | File | Responsibility |
 | --- | --- |
 | `.claude-plugin/plugin.json` | Plugin identity, version, repository, license |
@@ -1153,6 +1303,8 @@ Later, a question such as "Who has paid the most?" can be delegated to `agents/l
 | `dist/` | Self-contained runnable bundles |
 
 ### 15.3 Adapting this template
+
+Adaptation is the checklist for turning the reference repository into a different plugin without breaking the contract.
 
 1. Rename the plugin, marketplace, and MCP server consistently.
 2. Replace `src/ledger.ts` with your domain logic.
