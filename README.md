@@ -1,18 +1,18 @@
-# SplitSmart Ledger
+# SplitSmart
 
 A Claude Code plugin that records shared expenses in a local ledger and audits who owes what. It ships `add_expense` and `get_ledger` MCP tools, a `/split-bill` command, a `splitsmart-parser` skill, a `ledger-auditor` subagent, and a guard hook.
 
 ## Install in Claude Code
 
 ```
-claude plugin marketplace add hammadallauddin/splitsmart-ledger
-claude plugin install splitsmart-ledger@splitsmart
+claude plugin marketplace add hammadallauddin/splitsmart
+claude plugin install splitsmart@splitsmart
 ```
 
 Or in one step on Claude Code 2.1.275 or later:
 
 ```
-/plugin install splitsmart-ledger --marketplace hammadallauddin/splitsmart-ledger
+/plugin install splitsmart --marketplace hammadallauddin/splitsmart
 ```
 
 Restart Claude Code, then run:
@@ -23,7 +23,7 @@ Restart Claude Code, then run:
 
 Requires Node.js 18 or later. The server is shipped prebuilt in `dist/`, so no `npm install` is needed. Entries are appended to a JSONL file in the plugin's data directory; there is no database server.
 
-To remove it: `claude plugin uninstall splitsmart-ledger`.
+To remove it: `claude plugin uninstall splitsmart`.
 
 ## What's included
 

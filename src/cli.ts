@@ -1,7 +1,7 @@
 import { parseAddArgs, parseListArgs } from "./args.js";
 import { addExpense, ledgerFile, listExpenses } from "./ledger.js";
 
-const USAGE = `SplitSmart Ledger CLI
+const USAGE = `SplitSmart CLI
 
 Usage:
   splitsmart add --payer <name> --amount <amount> --category <category> [--description <text>]

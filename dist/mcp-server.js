@@ -14439,7 +14439,7 @@ function listExpenses(limit) {
 }
 
 // src/mcp-server.ts
-var server = new Server({ name: "splitsmart-ledger", version: "1.1.0" }, { capabilities: { tools: {} } });
+var server = new Server({ name: "splitsmart", version: "1.2.0" }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {

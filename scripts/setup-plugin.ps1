@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Set up and publish SplitSmart Ledger as a Claude Code plugin.
+    Set up and publish SplitSmart as a Claude Code plugin.
 .DESCRIPTION
     1. Installs dependencies and builds dist/
     2. Initializes git and pushes to GitHub
@@ -10,16 +10,16 @@
 
 param(
     [string]$GitHubUsername = "",
-    [string]$RepoName = "splitsmart-ledger"
+    [string]$RepoName = "splitsmart"
 )
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "`n=== SplitSmart Ledger - Plugin Setup ===" -ForegroundColor Cyan
+Write-Host "`n=== SplitSmart - Plugin Setup ===" -ForegroundColor Cyan
 Write-Host ""
 
 if (-not (Test-Path "package.json")) {
-    Write-Host "This script must be run from the splitsmart-ledger project directory" -ForegroundColor Yellow
+    Write-Host "This script must be run from the splitsmart project directory" -ForegroundColor Yellow
     exit 1
 }
 
@@ -40,7 +40,7 @@ if (-not (Test-Path ".git")) {
     Write-Host "Initializing git repository..." -ForegroundColor Yellow
     git init -b main
     git add .
-    git commit -m "Initial commit: SplitSmart Ledger plugin"
+    git commit -m "Initial commit: SplitSmart plugin"
 }
 
 Write-Host "Adding GitHub remote: $RepoUrl" -ForegroundColor Yellow
@@ -55,7 +55,7 @@ Write-Host "  $RepoUrl" -ForegroundColor White
 Write-Host ""
 Write-Host "To install in Claude Code, run:" -ForegroundColor Cyan
 Write-Host "  claude plugin marketplace add $GitHubUsername/$RepoName" -ForegroundColor Green
-Write-Host "  claude plugin install splitsmart-ledger@splitsmart" -ForegroundColor Green
+Write-Host "  claude plugin install splitsmart@splitsmart" -ForegroundColor Green
 Write-Host ""
 Write-Host "Then restart Claude Code and run:" -ForegroundColor White
 Write-Host "  /split-bill 40 paid by Ali for pizza" -ForegroundColor White

@@ -7,7 +7,7 @@
     },
     "plugins": [
         {
-            "name": "splitsmart-ledger",
+            "name": "splitsmart",
             "description": "Records shared expenses in SQLite and audits who owes what.",
             "source": "./",
             "category": "productivity"

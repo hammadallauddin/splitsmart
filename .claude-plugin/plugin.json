@@ -1,10 +1,10 @@
 {
-    "name": "splitsmart-ledger",
-    "version": "1.1.0",
-    "description": "Tracks shared expenses in a local SQLite ledger and settles group balances.",
+    "name": "splitsmart",
+    "version": "1.2.0",
+    "description": "Tracks shared expenses in a local ledger and settles group balances.",
     "author": {
         "name": "Muhammad Hammad"
     },
-    "repository": "https://github.com/hammadallauddin/splitsmart-ledger",
+    "repository": "https://github.com/hammadallauddin/splitsmart",
     "license": "MIT"
 }

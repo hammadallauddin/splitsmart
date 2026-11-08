@@ -3,7 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { addExpense, listExpenses } from "./ledger.js";
 
-const server = new Server({ name: "splitsmart-ledger", version: "1.1.0" }, { capabilities: { tools: {} } });
+const server = new Server({ name: "splitsmart", version: "1.2.0" }, { capabilities: { tools: {} } });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
     tools: [

@@ -147,7 +147,7 @@ function listExpenses(limit) {
 }
 
 // src/cli.ts
-var USAGE = `SplitSmart Ledger CLI
+var USAGE = `SplitSmart CLI
 
 Usage:
   splitsmart add --payer <name> --amount <amount> --category <category> [--description <text>]
