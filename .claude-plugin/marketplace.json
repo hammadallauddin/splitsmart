@@ -8,7 +8,7 @@
     "plugins": [
         {
             "name": "splitsmart",
-            "description": "Records shared expenses in SQLite and audits who owes what.",
+            "description": "Tracks shared expenses in a local ledger and settles group balances.",
             "source": "./",
             "category": "productivity"
         }
